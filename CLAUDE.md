@@ -4,27 +4,7 @@
 
 **quirk-feed** is a quirky micro-feed: post short updates and watch a newest-first timeline. It is a lean app derived from the Quirk Systems `project-scaffold`, keeping the scaffold's conventions (Next.js 15 App Router, TypeScript strict, Tailwind v4 CSS-first, shadcn/ui new-york, Drizzle ORM + SQLite, Vitest, Playwright) while trimming layers this product does not use (auth, server-state query, etc.).
 
-## Tech Stack
-
-| Category   | Tool                                 |
-| ---------- | ------------------------------------ |
-| Runtime    | Bun                                  |
-| Framework  | Next.js 15 (App Router, Turbopack)   |
-| Language   | TypeScript (strict)                  |
-| Styling    | Tailwind CSS v4 + shadcn/ui          |
-| Database   | Drizzle ORM (SQLite, better-sqlite3) |
-| Unit tests | Vitest + Testing Library             |
-| E2E        | Playwright                           |
-
-## Commands
-
-| Command               | Description                            |
-| --------------------- | -------------------------------------- |
-| `bun run dev`         | Dev server (runs migrations first)     |
-| `bun run validate`    | lint + type-check + unit tests + build |
-| `bun run test`        | Unit tests (watch)                     |
-| `bun run test:e2e`    | Playwright E2E                         |
-| `bun run db:generate` | Generate a Drizzle migration           |
+Stack and scripts: see `package.json`. `bun run validate` = lint + type-check + unit tests + build.
 
 ## Feature map
 
