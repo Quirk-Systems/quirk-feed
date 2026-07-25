@@ -1,0 +1,15 @@
+{
+  "repository": "Quirk-Systems/quirk-feed",
+  "domain": "knowledge-feed",
+  "registry": {
+    "authority": "Quirk-Systems/.github",
+    "path": ".quirk/registry.json",
+    "version": "0.1.0"
+  },
+  "policy": {"mode": "required"},
+  "semantic_impact": {
+    "default_change_class": "projection-or-domain-extension",
+    "local_extensions": [".quirk/extensions.json"],
+    "projections": ["feed-entries", "source-taxonomy", "research-registry", "derived-knowledge"]
+  }
+}
