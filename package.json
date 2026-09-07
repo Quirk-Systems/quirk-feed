@@ -47,7 +47,7 @@
     "@playwright/test": "^1.49.1",
     "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
     "@types/better-sqlite3": "^7.6.12",
@@ -55,19 +55,19 @@
     "@types/react": "^19.0.3",
     "@types/react-dom": "^19.0.2",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/coverage-v8": "^4.1.7",
+    "@vitest/coverage-v8": "^5.0.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.17.0",
     "eslint-config-next": "^15.1.0",
     "eslint-config-prettier": "^9.1.0",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.1",
     "postcss": "^8.5.15",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.3",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.1.7"
+    "vitest": "^5.0.0"
   },
   "engines": {
     "node": ">=20.0.0"
