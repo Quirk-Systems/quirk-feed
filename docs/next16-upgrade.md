@@ -1,6 +1,6 @@
 # Next 16 upgrade record
 
-Owner: **Quirk-Systems/quirk-feed**. Status: **candidate under verification**.
+Owner: **Quirk-Systems/quirk-feed**. Status: **verified candidate; Constrain release**.
 Inspection date: 2026-09-10. Baseline: `1420ef2e8d3efc23519c7a3b88d5c2d18bb61720`.
 Original dependency candidate: [PR #5](https://github.com/Quirk-Systems/quirk-feed/pull/5),
 head `3e040633c434728ee4882de9bcea92b99c78c7c7`.
@@ -84,9 +84,31 @@ broader exposure. No authentication product or centralized Quirk policy was adde
 
 ## Verification receipt
 
-Final validation results will be recorded here before handoff. Evidence must
-distinguish local execution, hosted CI, and deployed behavior. A production-ready
-or independently approved security claim has not been made.
+Verified code commit:
+[`5da89a670ecc9fe7757edb70de42e53d1c4b27da`](https://github.com/Quirk-Systems/quirk-feed/commit/5da89a670ecc9fe7757edb70de42e53d1c4b27da),
+against the baseline above. This receipt is a subsequent documentation-only change.
+
+| Evidence                                                                                                      | Result                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Hosted validation](https://github.com/Quirk-Systems/quirk-feed/actions/runs/34440084445/job/102753106624)    | Frozen install on Node 24.19.0/Bun 1.4.2; format, zero-warning lint, route type generation, TypeScript, 24 tests, and Next 16.3.4 Turbopack production build passed. Validation left tracked files unchanged.                                                      |
+| Dependency audit in that job                                                                                  | Zero reported vulnerabilities across 570 packages. This is an advisory-database result, not a guarantee against every vulnerability.                                                                                                                               |
+| [Hosted browser tests](https://github.com/Quirk-Systems/quirk-feed/actions/runs/34440084445/job/102753263489) | All 24 cases passed without retries: six cases each in Chromium, Firefox, WebKit, and mobile Chromium.                                                                                                                                                             |
+| Browser failure and recovery evidence                                                                         | Forced SQLite failure retained the draft and retry saved one post. A 32 KiB action request exceeded the 16 KiB limit, preserved the draft, and wrote zero rows. Both checks passed in all four browser configurations.                                             |
+| Local command checks                                                                                          | The 24 tests also passed with the V8 coverage command. Drizzle schema generation succeeded with no migration changes. The production build did not create the default database.                                                                                    |
+| [Semantic governance](https://github.com/Quirk-Systems/quirk-feed/actions/runs/34440084764/job/102753107832)  | Passed with zero registry errors. The shared registry reported 22 missing-alias warnings; the shared workflow also reported its older checkout action runtime. These belong to the central registry/workflow, whose authority is unchanged by this feed candidate. |
+
+The browser tests also cover the empty timeline, posting/reload persistence,
+same-second ordering, theme persistence, and narrow-screen overflow. Local browser
+execution was blocked by missing container system libraries; browser proof comes
+from hosted CI, not an unexecuted local test command.
+
+**Disposition: Constrain.** The upgrade is ready for review in
+[PR #22](https://github.com/Quirk-Systems/quirk-feed/pull/22). Repository and isolated
+runtime evidence support this candidate; human review, merge/deployment, serving
+artifact verification, and the public-access decisions above remain separate.
+No live database was accessed and no deployed-version or independently approved
+security claim is made. Related dependency PRs remain open until their maintainer
+resolves them; the table above records the safe disposition of each proposal.
 
 Observed repair attempts: the initial latest-version install exposed unsupported
 ESLint 10 and TypeScript 7 peer ranges. The local native build encountered a
