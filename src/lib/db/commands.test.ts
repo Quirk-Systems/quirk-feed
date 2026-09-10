@@ -3,6 +3,7 @@ import {
   existsSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -63,6 +64,101 @@ it("diagnoses without creating a database and backs up committed WAL data withou
       writer.close();
     }
   } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it("rejects a schema without the rowid required by the timeline", () => {
+  const directory = mkdtempSync(join(tmpdir(), "quirk-feed-doctor-schema-"));
+  const filename = join(directory, "feed.db");
+  const writer = new Database(filename);
+  try {
+    writer.exec(`
+      CREATE TABLE posts (
+        id TEXT PRIMARY KEY NOT NULL,
+        author TEXT NOT NULL,
+        body TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      ) WITHOUT ROWID;
+      INSERT INTO posts VALUES ('saved', 'bry', 'keep me', 123);
+    `);
+  } finally {
+    writer.close();
+  }
+  try {
+    const before = readFileSync(filename);
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/database.ts", "doctor"],
+      {
+        env: { ...process.env, DATABASE_URL: filename, NODE_ENV: "test" },
+        encoding: "utf8",
+        timeout: 15_000,
+      },
+    );
+    expect(result.status, result.stderr).toBe(1);
+    expect(result.stderr).toContain("rowid");
+    expect(result.stdout).not.toContain('"ok": true');
+    expect(readFileSync(filename)).toEqual(before);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it("rejects a corrupt completed backup before publication and cleans up staging", () => {
+  const directory = mkdtempSync(join(tmpdir(), "quirk-feed-backup-corrupt-"));
+  const filename = join(directory, "feed.db");
+  const target = join(directory, "backup.db");
+  const preload = join(directory, "corrupt-backup.mjs");
+  const writer = new Database(filename);
+  try {
+    writer.exec(
+      "CREATE TABLE fixture (body TEXT); INSERT INTO fixture VALUES ('keep me');",
+    );
+    const before = readFileSync(filename);
+    writeFileSync(
+      preload,
+      `
+      import { closeSync, openSync, writeSync } from "node:fs";
+      import Database from ${JSON.stringify(pathToFileURL(resolve("node_modules/better-sqlite3/lib/index.js")).href)};
+      const backup = Database.prototype.backup;
+      Database.prototype.backup = async function (destination, options) {
+        const result = await backup.call(this, destination, options);
+        // Corrupt the completed copy, exercising verification after native transfer.
+        const descriptor = openSync(destination, "r+");
+        try {
+          writeSync(descriptor, Buffer.from("broken SQLite header"), 0, 20, 0);
+        } finally {
+          closeSync(descriptor);
+        }
+        return result;
+      };
+    `,
+    );
+    const result = spawnSync(
+      process.execPath,
+      ["--import", preload, "scripts/database.ts", "backup", target],
+      {
+        env: { ...process.env, DATABASE_URL: filename, NODE_ENV: "test" },
+        encoding: "utf8",
+        timeout: 15_000,
+      },
+    );
+    expect(result.status, result.stderr).toBe(1);
+    expect(result.stderr).toContain("Backup integrity check failed");
+    expect(existsSync(target)).toBe(false);
+    expect(result.stdout).not.toContain("Database backup saved");
+    expect(
+      readdirSync(directory).some((name) =>
+        name.startsWith(".quirk-feed-backup-"),
+      ),
+    ).toBe(false);
+    expect(readFileSync(filename)).toEqual(before);
+    expect(writer.prepare("SELECT body FROM fixture").get()).toEqual({
+      body: "keep me",
+    });
+  } finally {
+    writer.close();
     rmSync(directory, { recursive: true, force: true });
   }
 });

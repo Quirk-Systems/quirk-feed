@@ -9,6 +9,26 @@ nextEnv.loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
 const require = createRequire(import.meta.url);
 const command = process.argv[2];
 
+function verifyBackup(filename: string) {
+  try {
+    const backup = new Database(filename, {
+      readonly: true,
+      fileMustExist: true,
+    });
+    try {
+      if (backup.pragma("integrity_check", { simple: true }) !== "ok") {
+        throw new Error("SQLite reported an invalid backup.");
+      }
+    } finally {
+      backup.close();
+    }
+  } catch (cause) {
+    throw new Error("Backup integrity check failed. No backup was published.", {
+      cause,
+    });
+  }
+}
+
 async function main() {
   if (command === "migrate") {
     const { sqlite } = openDatabase();
@@ -35,7 +55,9 @@ async function main() {
     if (command === "doctor") {
       const integrity = sqlite.pragma("quick_check", { simple: true });
       sqlite
-        .prepare("SELECT id, author, body, created_at FROM posts LIMIT 0")
+        .prepare(
+          "SELECT rowid, id, author, body, created_at FROM posts LIMIT 0",
+        )
         .all();
       if (integrity !== "ok") throw new Error("SQLite integrity check failed.");
       console.log(
@@ -67,6 +89,7 @@ async function main() {
     const staged = join(temporary, "backup.db");
     try {
       await sqlite.backup(staged);
+      verifyBackup(staged);
       chmodSync(staged, 0o600);
       // A hard link publishes atomically and fails if any destination exists.
       linkSync(staged, target);

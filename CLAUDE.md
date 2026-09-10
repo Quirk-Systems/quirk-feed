@@ -7,7 +7,7 @@ handle semantics unless the user explicitly changes the product boundary.
 ## Runtime and commands
 
 Next.js 16 App Router, React 19, TypeScript 6.0, Tailwind 4, Drizzle + native
-SQLite, Vitest 5, Playwright, Node 24, Bun 1.4.2. Exact runtime files and
+SQLite, Vitest 5, Playwright, Node 24.21.0, Bun 1.4.2. Exact runtime files and
 `package.json` are authoritative. Use `bun install --frozen-lockfile`.
 
 `bun run validate` runs formatting, lint, route type generation, type-checking,
@@ -38,6 +38,11 @@ Do not disable lint rules to hide upgrade defects. ESLint 10 and TypeScript 7
 remain outside the installed lint plugins' supported ranges; recheck upstream
 compatibility before upgrading them. Vite handles TypeScript path aliases
 natively, so no separate path-resolution plugin is needed.
+
+The backup CLI verifies the staged copy before publication. Preserve its
+non-overwrite, interruption, corrupt-copy, and source-preservation tests.
+Keep local CI action references pinned to verified full SHAs with version comments;
+Dependabot maintains those pins. Preserve the separately owned semantic workflow.
 
 Keep code, commands, README, and tests aligned. A passing candidate does not prove
 production deployment or grant merge/deploy authority.

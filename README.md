@@ -7,7 +7,7 @@ shadcn/ui, Drizzle ORM, and SQLite. Owned by **Quirk-Systems/quirk-feed**.
 
 ## Start locally
 
-Install Node **24** (the tested patch is in `.node-version`) and Bun **1.4.2**.
+Install Node **24.21.0** (pinned in `.node-version`) and Bun **1.4.2**.
 Use the committed Bun lockfile; Bun installs dependencies, while Next.js and
 database commands run on Node.
 
@@ -84,6 +84,9 @@ write failures and oversized requests only into this disposable instance.
 
 CI uses the same pinned runtimes and frozen install, checks that validation does
 not modify tracked files, and preserves browser failure traces for seven days.
+The app's CI actions are pinned to verified full commit SHAs, and checkout does
+not retain Git credentials. Each job records the tested commit and its parents:
+pull-request CI normally tests GitHub's synthetic merge, not the head alone.
 
 ## Operate and recover
 
@@ -101,7 +104,9 @@ bun run start
 Run `doctor` inside the **serving artifact** to establish installed versions.
 A repository manifest, dependency PR description, or historic CI run is not proof
 of the deployed version. The command checks an existing database read-only; it
-does not create one.
+does not create one. It also checks the columns and `rowid` used by the timeline;
+this is a query-compatibility check, not certification of the full schema or
+migration history.
 
 Before an upgrade, create a backup to a new filename:
 
@@ -113,11 +118,16 @@ The backup API includes data in SQLite's WAL. Do not copy only a live `.db` file
 The backup destination's parent directory must already exist. Store backups
 outside version control and protect them like the original database.
 
-The command stages the transfer privately and publishes the completed backup
-without replacing an existing file. The destination filesystem must support
+The command stages the transfer privately, reopens the copy read-only, and
+requires a full SQLite `integrity_check` before publishing it without replacing
+an existing file. This adds a scan of the backup before success is reported.
+The destination filesystem must support
 hard links. A killed process can leave a private `.quirk-feed-backup-*` staging
 directory beside the destination; remove it only after confirming no backup job
 is using it. An incomplete transfer never creates the requested backup filename.
+An integrity check proves neither freshness nor survival of a host power loss.
+Confirm the destination filesystem's hard-link and durability guarantees before
+using this recovery path in production; the CI fixtures do not simulate power loss.
 
 If startup fails, check the database path, disk permissions, disk capacity, and
 the committed `drizzle/` directory. Migration errors stop initialization and are

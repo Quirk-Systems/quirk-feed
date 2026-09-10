@@ -150,7 +150,55 @@ A Postgres migration would need deliberate equivalents for those behaviors,
 data-transfer verification, and a target project/access policy. It is not part
 of this upgrade, and no Supabase resource or data was changed.
 
+## Current-practice pass on 2026-09-10
+
+Baseline: `f9ce449ff7d3ab09b29decad2959a98d2cb8de9c`. The user authorized this
+bounded follow-up to PR #22. Ownership, public-feed behavior, database schema,
+and merge/deployment/live-data gates remain unchanged.
+
+- Update Node from 24.19.0 to **24.21.0 LTS**, released September 8, and align the
+  declared engine floor with the tested runtime. All 40 direct package versions
+  were rechecked against npm metadata: Next 16.3.4, React 19.3.0, Bun 1.4.2 and
+  the other installed packages remain current in their supported ranges.
+- Retain TypeScript 6.0.3 and ESLint 9.39.5. TypeScript 7 is outside
+  typescript-eslint's `<6.1.0` range; ESLint 10 is outside the React lint plugin's
+  peer range. Node 26 is the Current line, so this app stays on Node 24 LTS.
+- Pin the app's four external CI actions to the full SHAs resolved from their
+  upstream version tags. Disable persistent checkout credentials and record
+  each job's actual commit and parent SHAs. The organization-owned semantic
+  workflow remains centrally controlled; this pass does not change its policy.
+- Require a full `integrity_check` on the completed staged backup before atomic,
+  non-overwriting publication. Reject corruption and clean staging without
+  changing the source. This adds backup verification I/O; it does not prove
+  power-loss durability or target-filesystem support.
+- Make `doctor` check `rowid` as well as the visible post columns, matching the
+  timeline's query needs. A `WITHOUT ROWID` lookalike must fail diagnosis instead
+  of receiving a misleading success. Full migration-history validation remains
+  outside this diagnostic's claim.
+
+Local evidence on Node 24.21.0/Bun 1.4.2: `bun run validate` passes formatting,
+lint, route types, type-checking, 33 tests, and production build. Both new CLI
+regressions failed against the preceding implementation and pass after repair.
+`bun run db:generate` reports no schema changes, and `bun audit` reports no known
+vulnerabilities across 570 packages. An initial native install encountered a
+local header-extraction permission failure; retry with locally extracted Node
+headers succeeded. Local browser verification was blocked by unavailable browser
+support and OS package-install permissions; it is not counted as a pass.
+The exact candidate commit and hosted CI/browser results are linked in PR #22.
+Earlier receipts remain evidence for their original versions only.
+Release disposition remains **Constrain** to a candidate for human review.
+Reusable deposit: corrupt-copy and query-incompatible database fixtures alongside
+the existing interruption and destination-race cases. Independent operating-host
+verification and human acceptance remain outstanding.
+
 ## Primary sources
+
+- [Node 24.21.0 LTS release](https://nodejs.org/en/blog/release/v24.21.0)
+- [TypeScript ESLint supported dependency versions](https://typescript-eslint.io/users/dependency-versions/)
+- [npm Next release metadata](https://registry.npmjs.org/next/latest)
+- [React ESLint plugin peer requirements](https://registry.npmjs.org/eslint-plugin-react/latest)
+- [GitHub Actions secure-use guidance](https://docs.github.com/en/actions/reference/security/secure-use)
+- [SQLite integrity and quick checks](https://sqlite.org/pragma.html#pragma_integrity_check)
 
 - [Next 16 migration guide](https://nextjs.org/docs/app/guides/upgrading/version-16)
 - [Next ESLint configuration](https://nextjs.org/docs/app/api-reference/config/eslint)
