@@ -82,7 +82,7 @@ test("failed writes retain the draft and can be retried", async ({ page }) => {
     .getByLabel("Post", { exact: true })
     .fill("Keep my unfinished thought");
   await page.getByRole("button", { name: "Post", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.locator("form").getByRole("alert")).toContainText(
     "Couldn't save your quirk.",
   );
   await expect(page.getByLabel("Post", { exact: true })).toHaveValue(
@@ -110,7 +110,7 @@ test("oversized action requests are rejected without writing or losing the draft
     form.append(extra);
   });
   await page.getByRole("button", { name: "Post", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText(
+  await expect(page.locator("form").getByRole("alert")).toContainText(
     "Couldn't confirm your post.",
   );
   await expect(page.getByLabel("Post", { exact: true })).toHaveValue(

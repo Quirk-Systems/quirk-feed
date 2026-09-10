@@ -14,7 +14,7 @@ change is included in this candidate.
 
 The baseline built with Next 15.5.22 and passed nine unit and six browser tests.
 PR #5 installed 16.2.12 but failed during legacy `FlatCompat` lint configuration;
-its later validation and browser checks were skipped. The first eight advisories
+its later validation and browser checks were skipped. The eight advisories
 applicable to Next 15 had already been patched in 15.5.21; security notes alone
 did not require a major upgrade. This pass follows the user's subsequent
 authorization to implement the full upgrade.
@@ -28,7 +28,8 @@ authorization to implement the full upgrade.
   the connection through development reloads. Failed migrations close the
   connection and report the failure instead of silently continuing.
 - Server Actions reject file values in text fields, enforce a 16 KiB request
-  limit, and return a recoverable message when a write fails. The request limit
+  limit, and return a recoverable message when a write fails. Write-error logs
+  include only a diagnostic code, not SQL parameters or post contents. The request limit
   supplements patched framework behavior; it is not a substitute for patching.
 - Controlled form fields preserve drafts after rejected or unconfirmed requests,
   prevent editing/double submission while pending, and clear after confirmed saves.
@@ -92,7 +93,13 @@ ESLint 10 and TypeScript 7 peer ranges. The local native build encountered a
 container header-extraction ownership error; supplying unmodified Node headers
 extracted without ownership changes allowed the native tests to execute. A new
 test hook incorrectly returned a mock function under Vitest 5's teardown semantics;
-the hook now returns nothing. Local browser asset downloads initially timed out.
+the hook now returns nothing. Local browser asset downloads initially timed out;
+the official fallback supplied Firefox/WebKit, but this container lacks the
+system libraries needed to execute them. Hosted CI successfully installed all
+browser dependencies. Its first browser run passed 16 cases; eight failure-path
+cases stopped at an ambiguous alert locator that also matched Next's route
+announcer. Those assertions now target the form's alert, retaining strict
+matching and the full recovery/no-write checks.
 
 Reusable deposit: the isolated E2E runner, database recovery fixtures, and serving
 artifact diagnostic command are available in this repository. Reuse elsewhere

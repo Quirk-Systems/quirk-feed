@@ -34,7 +34,17 @@ export async function createPost(
   try {
     getDb().insert(posts).values(result.value).run();
   } catch (error) {
-    console.error("[quirk-feed] Could not save post", error);
+    // Database errors can embed query parameters. Log a code, never the draft.
+    const cause = error instanceof Error && error.cause ? error.cause : error;
+    const code =
+      cause &&
+      typeof cause === "object" &&
+      "code" in cause &&
+      typeof cause.code === "string" &&
+      /^SQLITE_[A-Z_]+$/.test(cause.code)
+        ? cause.code
+        : "UNEXPECTED_ERROR";
+    console.error("[quirk-feed] Could not save post", { code });
     return {
       error: "Couldn't save your quirk. Your draft is still here. Try again.",
     };

@@ -53,5 +53,12 @@ describe("createPost boundary", () => {
     expect(result.ok).toBeUndefined();
     expect(mocks.revalidate).not.toHaveBeenCalled();
     expect(log).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenCalledWith("[quirk-feed] Could not save post", {
+      code: "UNEXPECTED_ERROR",
+    });
+    expect(JSON.stringify(log.mock.calls)).not.toContain(
+      "private database path",
+    );
+    expect(JSON.stringify(log.mock.calls)).not.toContain("keep my draft");
   });
 });
