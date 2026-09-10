@@ -1,0 +1,112 @@
+import { chmodSync, existsSync, linkSync, mkdtempSync, rmSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join, resolve } from "node:path";
+import nextEnv from "@next/env";
+import Database from "better-sqlite3";
+import { databaseFilename, openDatabase } from "../src/lib/db/connection.ts";
+
+nextEnv.loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
+const require = createRequire(import.meta.url);
+const command = process.argv[2];
+
+function verifyBackup(filename: string) {
+  try {
+    const backup = new Database(filename, {
+      readonly: true,
+      fileMustExist: true,
+    });
+    try {
+      if (backup.pragma("integrity_check", { simple: true }) !== "ok") {
+        throw new Error("SQLite reported an invalid backup.");
+      }
+    } finally {
+      backup.close();
+    }
+  } catch (cause) {
+    throw new Error("Backup integrity check failed. No backup was published.", {
+      cause,
+    });
+  }
+}
+
+async function main() {
+  if (command === "migrate") {
+    const { sqlite } = openDatabase();
+    sqlite.close();
+    console.log("Database migrations applied.");
+    return;
+  }
+  if (command !== "doctor" && command !== "backup") {
+    throw new Error(
+      "Usage: bun run doctor | bun run db:migrate | bun run db:backup <new-backup.db>",
+    );
+  }
+  const filename = resolve(databaseFilename());
+  if (!existsSync(filename)) {
+    throw new Error(
+      "Database does not exist. Run bun run db:migrate or start the app first.",
+    );
+  }
+  const sqlite = new Database(filename, {
+    readonly: true,
+    fileMustExist: true,
+  });
+  try {
+    if (command === "doctor") {
+      const integrity = sqlite.pragma("quick_check", { simple: true });
+      sqlite
+        .prepare(
+          "SELECT rowid, id, author, body, created_at FROM posts LIMIT 0",
+        )
+        .all();
+      if (integrity !== "ok") throw new Error("SQLite integrity check failed.");
+      console.log(
+        JSON.stringify(
+          {
+            ok: true,
+            node: process.version,
+            next: require("next/package.json").version,
+            react: require("react/package.json").version,
+            database: filename,
+            integrity,
+            journalMode: sqlite.pragma("journal_mode", { simple: true }),
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+    const destination =
+      process.argv[3] === "--" ? process.argv[4] : process.argv[3];
+    if (!destination)
+      throw new Error(
+        "Supply a new backup filename: bun run db:backup backups/feed.db",
+      );
+    const target = resolve(destination);
+    // Stage on the same filesystem; an interrupted transfer never owns target.
+    const temporary = mkdtempSync(join(dirname(target), ".quirk-feed-backup-"));
+    const staged = join(temporary, "backup.db");
+    try {
+      await sqlite.backup(staged);
+      verifyBackup(staged);
+      chmodSync(staged, 0o600);
+      // A hard link publishes atomically and fails if any destination exists.
+      linkSync(staged, target);
+    } finally {
+      rmSync(temporary, { recursive: true, force: true });
+    }
+    console.log(`Database backup saved to ${target}`);
+  } finally {
+    sqlite.close();
+  }
+}
+
+try {
+  await main();
+} catch (error) {
+  console.error(
+    error instanceof Error ? error.message : "Database command failed.",
+  );
+  process.exitCode = 1;
+}

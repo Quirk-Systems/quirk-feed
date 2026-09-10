@@ -7,8 +7,7 @@ export interface NewPost {
 }
 
 export type ValidateResult =
-  | { ok: true; value: NewPost }
-  | { ok: false; error: string };
+  { ok: true; value: NewPost } | { ok: false; error: string };
 
 /** Normalize and validate raw post input from a form submission. */
 export function validatePost(input: {
