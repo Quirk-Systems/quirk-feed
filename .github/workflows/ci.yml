@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -13,39 +16,40 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.11
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - run: bun install
-
-      - run: bun run lint
-      - run: bun run type-check
-      - run: bun run test:run
-      - run: bun run build
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - run: bun run validate
+      - run: git diff --exit-code
+      - run: bun audit
 
   e2e:
     runs-on: ubuntu-latest
     needs: validate
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.3.11
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - run: bun install
-      - run: bunx playwright install --with-deps
-
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - run: bun run test:e2e:install
       - run: bun run test:e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-failure
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

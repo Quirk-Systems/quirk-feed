@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { posts } from "@/lib/db/schema";
 import { validatePost } from "@/lib/feed";
 
@@ -14,16 +14,31 @@ export async function createPost(
   _prevState: PostFormState,
   formData: FormData,
 ): Promise<PostFormState> {
+  const author = formData.get("author");
+  const body = formData.get("body");
+  if (
+    (author !== null && typeof author !== "string") ||
+    typeof body !== "string"
+  ) {
+    return { error: "Use text for your handle and post." };
+  }
   const result = validatePost({
-    author: formData.get("author")?.toString(),
-    body: formData.get("body")?.toString(),
+    author,
+    body,
   });
 
   if (!result.ok) {
     return { error: result.error };
   }
 
-  await db.insert(posts).values(result.value);
+  try {
+    getDb().insert(posts).values(result.value).run();
+  } catch (error) {
+    console.error("[quirk-feed] Could not save post", error);
+    return {
+      error: "Couldn't save your quirk. Your draft is still here. Try again.",
+    };
+  }
   revalidatePath("/");
   return { ok: true };
 }
