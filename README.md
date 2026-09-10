@@ -113,6 +113,12 @@ The backup API includes data in SQLite's WAL. Do not copy only a live `.db` file
 The backup destination's parent directory must already exist. Store backups
 outside version control and protect them like the original database.
 
+The command stages the transfer privately and publishes the completed backup
+without replacing an existing file. The destination filesystem must support
+hard links. A killed process can leave a private `.quirk-feed-backup-*` staging
+directory beside the destination; remove it only after confirming no backup job
+is using it. An incomplete transfer never creates the requested backup filename.
+
 If startup fails, check the database path, disk permissions, disk capacity, and
 the committed `drizzle/` directory. Migration errors stop initialization and are
 logged; they are never silently treated as success. The page presents a retry

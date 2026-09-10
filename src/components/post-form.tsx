@@ -12,12 +12,14 @@ const initialState: PostFormState = {};
 export function PostForm() {
   const [author, setAuthor] = useState("");
   const [body, setBody] = useState("");
+  const [showFeedback, setShowFeedback] = useState(false);
   const [state, formAction, pending] = useActionState(
     async (previous: PostFormState, formData: FormData) => {
       let result: PostFormState;
       try {
         result = await createPost(previous, formData);
       } catch {
+        setShowFeedback(true);
         return {
           error:
             "Couldn't confirm your post. Your draft is still here. Check the timeline before retrying.",
@@ -27,6 +29,7 @@ export function PostForm() {
         setAuthor("");
         setBody("");
       }
+      setShowFeedback(true);
       return result;
     },
     initialState,
@@ -48,7 +51,10 @@ export function PostForm() {
         maxLength={MAX_AUTHOR}
         value={author}
         readOnly={pending}
-        onChange={(event) => setAuthor(event.target.value)}
+        onChange={(event) => {
+          setAuthor(event.target.value);
+          setShowFeedback(false);
+        }}
       />
       <label htmlFor="post-body" className="text-sm font-medium">
         Post
@@ -62,19 +68,22 @@ export function PostForm() {
         value={body}
         readOnly={pending}
         aria-describedby="post-help"
-        aria-invalid={!!state.error}
-        onChange={(event) => setBody(event.target.value)}
+        aria-invalid={showFeedback && !!state.error}
+        onChange={(event) => {
+          setBody(event.target.value);
+          setShowFeedback(false);
+        }}
       />
       <p id="post-help" className="text-muted-foreground text-xs">
         {body.length}/{MAX_BODY} characters · Blank handles appear as @anon.
       </p>
-      {state.error ? (
+      {showFeedback && state.error ? (
         <p role="alert" className="text-destructive text-sm">
           {state.error}
         </p>
       ) : null}
       <p role="status" className="text-muted-foreground text-sm">
-        {pending ? "Posting…" : state.ok ? "Quirk posted." : ""}
+        {pending ? "Posting…" : showFeedback && state.ok ? "Quirk posted." : ""}
       </p>
       <div className="flex justify-end">
         <Button type="submit" disabled={pending}>

@@ -1,6 +1,6 @@
-import { closeSync, existsSync, openSync, rmSync } from "node:fs";
+import { chmodSync, existsSync, linkSync, mkdtempSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
-import { resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import nextEnv from "@next/env";
 import Database from "better-sqlite3";
 import { databaseFilename, openDatabase } from "../src/lib/db/connection.ts";
@@ -62,13 +62,16 @@ async function main() {
         "Supply a new backup filename: bun run db:backup backups/feed.db",
       );
     const target = resolve(destination);
-    // Refuse overwrites, including an accidental backup onto the source database.
-    closeSync(openSync(target, "wx", 0o600));
+    // Stage on the same filesystem; an interrupted transfer never owns target.
+    const temporary = mkdtempSync(join(dirname(target), ".quirk-feed-backup-"));
+    const staged = join(temporary, "backup.db");
     try {
-      await sqlite.backup(target);
-    } catch (error) {
-      rmSync(target, { force: true });
-      throw error;
+      await sqlite.backup(staged);
+      chmodSync(staged, 0o600);
+      // A hard link publishes atomically and fails if any destination exists.
+      linkSync(staged, target);
+    } finally {
+      rmSync(temporary, { recursive: true, force: true });
     }
     console.log(`Database backup saved to ${target}`);
   } finally {

@@ -82,11 +82,12 @@ inside the serving artifact, and separately verify its startup and proxy setting
 The public feed still needs an access/abuse/moderation/retention decision before
 broader exposure. No authentication product or centralized Quirk policy was added.
 
-## Verification receipt
+## Initial upgrade verification receipt
 
 Verified code commit:
 [`5da89a670ecc9fe7757edb70de42e53d1c4b27da`](https://github.com/Quirk-Systems/quirk-feed/commit/5da89a670ecc9fe7757edb70de42e53d1c4b27da),
-against the baseline above. This receipt is a subsequent documentation-only change.
+against the baseline above. These results describe the initial upgrade, before
+the follow-up review repairs below. The PR's latest CI run covers its current head.
 
 | Evidence                                                                                                      | Result                                                                                                                                                                                                                                                             |
 | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -127,6 +128,28 @@ Reusable deposit: the isolated E2E runner, database recovery fixtures, and servi
 artifact diagnostic command are available in this repository. Reuse elsewhere
 requires that system's own compatibility check. No cross-system promotion is claimed.
 
+## Follow-up review on 2026-09-10
+
+The Superpowers code review identified two concrete defects in the initial
+candidate. Backup transfers previously created the requested destination before
+completion; an interrupted process could leave an incomplete file there. Backups
+now transfer into a private directory on the destination filesystem and publish
+the completed file with a non-overwriting atomic hard link. Two native CLI
+regressions reproduce a killed transfer and a competing destination writer.
+
+The form also retained an earlier error or success after the user edited the
+next draft. Feedback now clears on either field edit and returns with the next
+action response. Five component regressions cover both fields and resubmission.
+All seven new regressions failed before their respective fixes and passed after
+them. Current full validation and browser evidence are attached to the latest
+head in [PR #22](https://github.com/Quirk-Systems/quirk-feed/pull/22/checks).
+
+Supabase was assessed separately. This app uses SQLite-specific schemas,
+synchronous queries, `rowid` ordering, file migrations, and local backup commands.
+A Postgres migration would need deliberate equivalents for those behaviors,
+data-transfer verification, and a target project/access policy. It is not part
+of this upgrade, and no Supabase resource or data was changed.
+
 ## Primary sources
 
 - [Next 16 migration guide](https://nextjs.org/docs/app/guides/upgrading/version-16)
@@ -135,6 +158,8 @@ requires that system's own compatibility check. No cross-system promotion is cla
 - [Next 16.3.3 security release](https://github.com/vercel/next.js/releases/tag/v16.3.3)
 - [Next 16.2.11 advisories](https://github.com/vercel/next.js/releases/tag/v16.2.11)
 - [esbuild advisory](https://github.com/evanw/esbuild/security/advisories/GHSA-67mh-4wv8-2f99)
+- [Supabase with Drizzle](https://supabase.com/docs/guides/database/drizzle)
+- [Supabase data access models](https://supabase.com/docs/guides/database/secure-data)
 - Exact dependency versions and integrity hashes: `bun.lock`.
 
 Receipt invalidators: source or dependency changes, changed runtime/hosting,
