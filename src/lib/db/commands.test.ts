@@ -10,8 +10,13 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { createRequire } from "node:module";
 import Database from "better-sqlite3";
 import { expect, it } from "vitest";
+
+// Mirrors how scripts/database.ts reports it: the installed next version.
+const nextVersion = createRequire(import.meta.url)("next/package.json")
+  .version as string;
 
 it("diagnoses without creating a database and backs up committed WAL data without overwrites", () => {
   const directory = mkdtempSync(join(tmpdir(), "quirk-feed-cli-test-"));
@@ -33,7 +38,9 @@ it("diagnoses without creating a database and backs up committed WAL data withou
     expect(report.status, report.stderr).toBe(0);
     expect(JSON.parse(report.stdout)).toMatchObject({
       ok: true,
-      next: "16.3.4",
+      // Assert against the installed next, not a hard-coded version string,
+      // so security bumps don't fail the doctor check.
+      next: nextVersion,
       integrity: "ok",
     });
     const writer = new Database(filename);
