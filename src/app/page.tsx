@@ -1,20 +1,16 @@
-import { desc } from "drizzle-orm";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PostForm } from "@/components/post-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { db } from "@/lib/db";
-import { posts } from "@/lib/db/schema";
+import { getDb } from "@/lib/db";
+import { readTimeline } from "@/lib/db/queries";
 import { relativeTime } from "@/lib/feed";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export default async function Home() {
-  const timeline = await db
-    .select()
-    .from(posts)
-    .orderBy(desc(posts.createdAt))
-    .limit(100);
+  const timeline = readTimeline(getDb());
 
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-6">
