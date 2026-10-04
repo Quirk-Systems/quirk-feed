@@ -1,17 +1,12 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import Database from "better-sqlite3";
-import * as schema from "./schema";
+import "server-only";
+import { openDatabase } from "./connection";
 
-const sqlite = new Database(process.env.DATABASE_URL ?? "local.db");
-sqlite.pragma("journal_mode = WAL");
+const state = globalThis as typeof globalThis & {
+  quirkFeedDatabase?: ReturnType<typeof openDatabase>;
+};
 
-export const db = drizzle(sqlite, { schema });
-
-// Apply migrations on startup so the app is self-sufficient in every context
-// (dev, production start, and CI e2e) without a separate migrate step.
-try {
-  migrate(db, { migrationsFolder: "./drizzle" });
-} catch {
-  // Migrations already applied or running concurrently — safe to ignore.
+/** Lazy initialization avoids writing a database during builds; reuse across HMR. */
+export function getDb() {
+  state.quirkFeedDatabase ??= openDatabase();
+  return state.quirkFeedDatabase.db;
 }
