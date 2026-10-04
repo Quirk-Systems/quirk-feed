@@ -1,11 +1,16 @@
 version: 2
 updates:
-  - package-ecosystem: npm
+  - package-ecosystem: bun
     directory: /
     schedule:
       interval: weekly
       day: monday
     open-pull-requests-limit: 10
+    ignore:
+      # Runtime floor is Node 24 (engines, .node-version);
+      # @types/node majors must track the runtime, not lead it.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: chore
       prefix-development: chore
