@@ -31,6 +31,15 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version-file: .bun-version
+      # Native SQLite may need a source build; do not rely on runner-global node-gyp.
+      - name: Expose node-gyp bundled with the configured Node runtime
+        run: |
+          node_gyp="$(npm root -g)/npm/node_modules/node-gyp/bin/node-gyp.js"
+          test -f "$node_gyp"
+          mkdir -p "$RUNNER_TEMP/native-tools"
+          ln -s "$node_gyp" "$RUNNER_TEMP/native-tools/node-gyp"
+          printf '%s\n' "$RUNNER_TEMP/native-tools" >> "$GITHUB_PATH"
+          node "$node_gyp" --version
       - run: bun install --frozen-lockfile
       - run: bun run validate
       - run: git diff --exit-code
@@ -57,6 +66,15 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version-file: .bun-version
+      # Native SQLite may need a source build; do not rely on runner-global node-gyp.
+      - name: Expose node-gyp bundled with the configured Node runtime
+        run: |
+          node_gyp="$(npm root -g)/npm/node_modules/node-gyp/bin/node-gyp.js"
+          test -f "$node_gyp"
+          mkdir -p "$RUNNER_TEMP/native-tools"
+          ln -s "$node_gyp" "$RUNNER_TEMP/native-tools/node-gyp"
+          printf '%s\n' "$RUNNER_TEMP/native-tools" >> "$GITHUB_PATH"
+          node "$node_gyp" --version
       - run: bun install --frozen-lockfile
       - run: bun run test:e2e:install
       - run: bun run test:e2e
@@ -64,6 +82,95 @@ jobs:
         if: failure()
         with:
           name: playwright-failure
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # Explicit migration probes; original required-check contexts remain unchanged.
+  ubuntu26-validate:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact head and record Ubuntu image
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          cat /etc/os-release
+          printf 'ImageOS=%s ImageVersion=%s\n' "$ImageOS" "$ImageVersion"
+      - name: Record tested checkout
+        run: |
+          git show --no-patch --format='commit=%H'
+          git cat-file -p HEAD | sed -n '/^$/q; /^parent /p'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .node-version
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: .bun-version
+      # Native SQLite may need a source build; do not rely on runner-global node-gyp.
+      - name: Expose node-gyp bundled with the configured Node runtime
+        run: |
+          node_gyp="$(npm root -g)/npm/node_modules/node-gyp/bin/node-gyp.js"
+          test -f "$node_gyp"
+          mkdir -p "$RUNNER_TEMP/native-tools"
+          ln -s "$node_gyp" "$RUNNER_TEMP/native-tools/node-gyp"
+          printf '%s\n' "$RUNNER_TEMP/native-tools" >> "$GITHUB_PATH"
+          node "$node_gyp" --version
+      - run: bun install --frozen-lockfile
+      - run: bun run validate
+      - run: git diff --exit-code
+      # braces GHSA-vfj7-8cjw-p6xm: no fixed release exists (3.0.3 is latest)
+      # and the only chains are dev-time lint globs (eslint-config-next >
+      # fast-glob > micromatch). Drop the ignore once a fixed braces ships.
+      - run: bun audit --ignore=GHSA-vfj7-8cjw-p6xm
+
+  ubuntu26-e2e:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact head and record Ubuntu image
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          cat /etc/os-release
+          printf 'ImageOS=%s ImageVersion=%s\n' "$ImageOS" "$ImageVersion"
+      - name: Record tested checkout
+        run: |
+          git show --no-patch --format='commit=%H'
+          git cat-file -p HEAD | sed -n '/^$/q; /^parent /p'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .node-version
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: .bun-version
+      # Native SQLite may need a source build; do not rely on runner-global node-gyp.
+      - name: Expose node-gyp bundled with the configured Node runtime
+        run: |
+          node_gyp="$(npm root -g)/npm/node_modules/node-gyp/bin/node-gyp.js"
+          test -f "$node_gyp"
+          mkdir -p "$RUNNER_TEMP/native-tools"
+          ln -s "$node_gyp" "$RUNNER_TEMP/native-tools/node-gyp"
+          printf '%s\n' "$RUNNER_TEMP/native-tools" >> "$GITHUB_PATH"
+          node "$node_gyp" --version
+      - run: bun install --frozen-lockfile
+      - run: bun run test:e2e:install
+      - run: bun run test:e2e
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: failure()
+        with:
+          name: playwright-failure-ubuntu26
           path: |
             playwright-report/
             test-results/
