@@ -5,6 +5,58 @@ Post short updates. Watch the newest-first timeline. Keep the quirk.
 A small Next.js 16 App Router app with React 19, TypeScript, Tailwind CSS 4,
 shadcn/ui, Drizzle ORM, and SQLite. Owned by **Quirk-Systems/quirk-feed**.
 
+
+## Intended role — Bryan's decision, October 8, 2026
+
+Feed's primary role is a **private Quirk activity surface** for human updates,
+agent receipts and reviewable proposed moves. This is the selected direction,
+not a claim that the existing micro-feed implements these capabilities.
+
+The current app remains an unauthenticated text feed. Do not expose private
+activity until access control and identity have been implemented and verified.
+A display handle does not establish a human or agent identity.
+
+### Required operating boundaries
+
+- Human updates, agent receipts and proposed moves must be distinguishable.
+  A proposal is not approval; displaying an approval is not an execution grant.
+- Receipts must identify the actor, source object/version, attempted action,
+  observed outcome and evidence reference. Report unknown or failed outcomes
+  explicitly. Never infer completion from a posted message.
+- Proposed moves must link to the responsible authority surface. Feed must not
+  execute provider writes or manufacture grants from reactions, text or status.
+- Imports require authenticated adapters, stable source IDs and idempotent
+  ingestion. Retries must not duplicate events; ordering must preserve source
+  timestamps separately from ingestion time.
+- Keep provider credentials server-side and scoped to the adapter. Activity
+  payloads and evidence links require secret filtering and access checks.
+- Define retention, deletion, backup and restore behavior before storing private
+  receipts. A timeline is not the authoritative evidence store.
+- SQLite requires persistent local storage. CDN caching must not expose private
+  responses; blob/media references require their own authorization and lifecycle.
+  Multi-host writes, sync and external distribution remain unimplemented.
+- Runtime filesystem traversal must have an explicit allowed root, symlink
+  policy and bounded work. Do not assume lint-glob compatibility establishes
+  safe media ingestion, backup traversal or recursive synchronization.
+
+### Dependency repair admission
+
+The Pet replacement is a candidate for Feed, not inherited proof. Preserve
+Next lint enforcement and require Feed-specific tests of installed dependency
+identity, every locked consumer, literal/relative/glob roots, hidden paths,
+broken links, symlink cycles, out-of-root links and bounded termination.
+Any unsupported root configuration must fail explicitly rather than silently
+reduce lint coverage. Test audit integrity without ignored advisories.
+
+Then verify frozen installation, security guards, application tests, production
+build and existing/Ubuntu 26 browser workflows at the resulting exact commit.
+Do not extend runtime or hosting support from a passing lint fixture.
+
+Investigation status: Pet's inspected local patch targets Next ESLint 16.3.8,
+matching Feed's declared version. Its inspected tests do not contain symlink-cycle
+coverage. No replacement has been applied to Feed and no new compatibility
+run is established. The existing braces exception remains.
+
 ## Start locally
 
 Install Node **24.21.0** (pinned in `.node-version`) and Bun **1.4.2**.
