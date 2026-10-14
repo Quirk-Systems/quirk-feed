@@ -46,3 +46,9 @@ Dependabot maintains those pins. Preserve the separately owned semantic workflow
 
 Keep code, commands, README, and tests aligned. A passing candidate does not prove
 production deployment or grant merge/deploy authority.
+
+## Context continuity
+
+For changes involving context, preferences, creative work, or participation, read
+[QUIRK-CONTEXT.md](QUIRK-CONTEXT.md) and preserve its scoped requirements.
+Do not treat this instruction entry point as proof of host loading or runtime adoption.

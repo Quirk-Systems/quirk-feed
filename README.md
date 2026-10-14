@@ -151,3 +151,9 @@ dependency change and validate it before review.
 ## License
 
 [Apache 2.0](LICENSE).
+
+## Context continuity
+
+For changes involving context, preferences, creative work, or participation, read
+[QUIRK-CONTEXT.md](QUIRK-CONTEXT.md) and preserve its scoped requirements.
+Do not treat this instruction entry point as proof of host loading or runtime adoption.
