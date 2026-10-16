@@ -5,7 +5,6 @@ Post short updates. Watch the newest-first timeline. Keep the quirk.
 A small Next.js 16 App Router app with React 19, TypeScript, Tailwind CSS 4,
 shadcn/ui, Drizzle ORM, and SQLite. Owned by **Quirk-Systems/quirk-feed**.
 
-
 ## Intended role — Bryan's decision, October 8, 2026
 
 Feed's primary role is a **private Quirk activity surface** for human updates,
