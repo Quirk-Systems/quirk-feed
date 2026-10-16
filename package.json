@@ -27,7 +27,9 @@
     "validate": "bun run format:check && bun run lint && bun run type-check && bun run test:run && bun run build",
     "db:backup": "node scripts/database.ts backup",
     "doctor": "node scripts/database.ts doctor",
-    "test:e2e:install": "playwright install --with-deps"
+    "test:e2e:install": "playwright install --with-deps",
+    "security:check": "bun scripts/check-security-dependencies.mjs",
+    "security:test": "bun test scripts/check-security-dependencies.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-separator": "^1.1.15",
@@ -81,6 +83,8 @@
     "better-sqlite3"
   ],
   "overrides": {
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "source-map-js": "1.2.2",
+    "sharp": "0.35.5"
   }
 }
