@@ -7,6 +7,10 @@ updates:
       day: monday
     open-pull-requests-limit: 10
     ignore:
+      # The installed lint parser requires the TypeScript 6 API. Revisit this
+      # hold when upstream explicitly supports the native TypeScript 7 package.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
       # Runtime floor is Node 24 (engines, .node-version);
       # @types/node majors must track the runtime, not lead it.
       - dependency-name: "@types/node"
