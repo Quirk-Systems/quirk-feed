@@ -11,6 +11,12 @@ updates:
       # @types/node majors must track the runtime, not lead it.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # ESLint 10 is blocked by the React, import, and JSX
+      # accessibility plugins resolved by eslint-config-next.
+      # Evidence: PRs #31, #42, and #38.
+      # Remove after declared peer support and full validation.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: chore
       prefix-development: chore
@@ -53,6 +59,9 @@ updates:
         patterns:
           - "eslint*"
           - "@eslint/*"
+
+      formatting:
+        patterns:
           - "prettier*"
 
   - package-ecosystem: github-actions
